@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#23262b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Stock Neumáticos</title>
+<style>
+:root{--bg:#e9e8e4;--card:#fff;--tx:#1d2025;--mu:#6a6f78;--bd:#d6d4ce;--hd:#23262b;--ac:#f2c200;--ok:#2b8a3e;--bad:#c92a2a}
+@media(prefers-color-scheme:dark){:root{--bg:#17191d;--card:#22252b;--tx:#eceae4;--mu:#9a9fa8;--bd:#32363e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,.big{font-family:"Bahnschrift","Arial Narrow","Roboto Condensed",system-ui,sans-serif;letter-spacing:.01em}
+header{position:sticky;top:0;z-index:5;background:var(--hd);color:#fff;display:flex;align-items:center;gap:6px;padding:calc(8px + env(safe-area-inset-top,0px)) 8px 8px;border-bottom:4px solid var(--ac)}
+header h1{font-size:20px;margin:0;flex:1;font-weight:700}
+.ib{background:none;border:0;color:inherit;font-size:24px;width:44px;height:44px;border-radius:8px}
+.ib:active{background:#ffffff22}
+main{padding:12px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.mu{color:var(--mu);font-size:14px}
+.btn{border:0;border-radius:8px;padding:12px 16px;font-size:16px;font-weight:600;background:var(--hd);color:#fff}
+.btn.ac{background:var(--ac);color:#1d2025}
+.btn.ghost{background:none;border:1px solid var(--bd);color:var(--tx)}
+.btn:active{opacity:.7}
+.btn.full{width:100%}
+.item{display:flex;align-items:center;gap:10px;padding:14px 12px;background:var(--card);border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;width:100%;text-align:left;color:inherit;font:inherit}
+.size{font-family:"Bahnschrift","Arial Narrow",system-ui,sans-serif;font-size:22px;font-weight:700}
+.qty{font-family:"Bahnschrift","Arial Narrow",system-ui,sans-serif;font-size:28px;font-weight:700;min-width:44px;text-align:center}
+.pill{font-size:13px;font-weight:700;border-radius:20px;padding:2px 10px;background:var(--bd)}
+.pill.low{background:#ffe3e3;color:var(--bad)}.pill.zero{background:var(--bad);color:#fff}
+.step{width:54px;height:54px;border-radius:50%;border:0;font-size:30px;font-weight:700;line-height:1}
+.step.m{background:var(--bad);color:#fff}.step.p{background:var(--ok);color:#fff}
+.step:active{transform:scale(.93)}
+.mini{background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;color:var(--tx);font-size:14px}
+input[type=search],input[type=text]{width:100%;padding:12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px;margin-bottom:10px}
+.drawer{position:fixed;inset:0;z-index:10;display:none}
+.drawer.on{display:block}
+.drawer .bg{position:absolute;inset:0;background:#0008}
+.drawer nav{position:absolute;left:0;top:0;bottom:0;width:78%;max-width:300px;background:var(--card);padding:calc(16px + env(safe-area-inset-top,0px)) 12px 16px;overflow:auto}
+.drawer h2{margin:0 8px 12px;font-size:22px}
+.drawer button{display:flex;gap:12px;align-items:center;width:100%;border:0;background:none;color:var(--tx);font-size:18px;padding:14px 10px;border-radius:8px;text-align:left}
+.drawer button.sel{background:var(--ac);color:#1d2025;font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{text-align:center;font-size:12px;color:var(--mu)}
+.day{aspect-ratio:1;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font-size:14px;padding:3px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between}
+.day b{align-self:flex-end;background:var(--ac);color:#1d2025;border-radius:10px;padding:0 7px;font-size:15px}
+.day.today{border:2px solid var(--hd)}.day.sel{outline:3px solid var(--ac)}
+.day.empty{visibility:hidden}
+.total{background:var(--hd);color:#fff;border-radius:12px;padding:18px;text-align:center;margin-bottom:12px;border-bottom:5px solid var(--ac)}
+.total .big{font-size:64px;font-weight:700;line-height:1}
+.bar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ac)}
+.empty-msg{text-align:center;color:var(--mu);padding:30px 10px}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:4;box-shadow:0 4px 12px #0005}
+</style>
+</head>
+<body>
+<header>
+  <button class="ib" id="menuBtn" aria-label="Abrir menú">☰</button>
+  <button class="ib" id="backBtn" aria-label="Volver" style="display:none">←</button>
+  <h1 id="title">Inicio</h1>
+</header>
+<div class="drawer" id="drawer"><div class="bg" id="dbg"></div><nav id="nav"></nav></div>
+<main id="main"></main>
+
+<script>
+const KEY='stockNeumaticos.v1', LOW=2;
+let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{sizes:{},log:[]};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('No se pudo guardar. Revisa el espacio del navegador.')}};
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const qtyOf=k=>S.sizes[k].reduce((a,i)=>a+i.qty,0);
+const totalAll=()=>Object.keys(S.sizes).reduce((a,k)=>a+qtyOf(k),0);
+
+let view='home', cur=null, cal=new Date(), selDay=iso(new Date()), q='';
+const MENU=[['home','📅','Inicio'],['stock','📦','Stock de almacén'],['out','🔧','Ruedas sacadas'],['count','🔢','Contador de ruedas'],['backup','💾','Copia de seguridad']];
+
+function go(v,k=null){view=v;cur=k;q='';$('#drawer').classList.remove('on');render();scrollTo(0,0)}
+$('#menuBtn').onclick=()=>$('#drawer').classList.add('on');
+$('#dbg').onclick=()=>$('#drawer').classList.remove('on');
+$('#backBtn').onclick=()=>go('stock');
+
+function mov(k,id,n){
+  const it=S.sizes[k].find(i=>i.id===id); if(!it)return;
+  if(it.qty+n<0){alert('No hay suficientes ruedas en el almacén.');return}
+  it.qty+=n;
+  S.log.push({id:uid(),d:iso(new Date()),t:n<0?'out':'in',s:k,b:it.b,r:it.r,n:Math.abs(n),i:id});
+  save();render();
+}
+function movN(k,id,sign){
+  const v=parseInt(prompt(sign<0?'¿Cuántas ruedas sacas?':'¿Cuántas ruedas entran?','4'),10);
+  if(v>0)mov(k,id,sign*v);
+}
+function addSize(){
+  let m=prompt('Medida de la rueda (ej: 205/55 R16)');
+  if(!m)return; m=m.trim().toUpperCase().replace(/\s+/g,' ');
+  if(!m)return;
+  if(S.sizes[m]){alert('Esa medida ya existe.');return}
+  S.sizes[m]=[];save();go('size',m);
+}
+function delSize(k){
+  const n=qtyOf(k);
+  if(confirm(`¿Borrar la medida ${k}?${n?` Tiene ${n} ruedas en stock.`:''}`)){delete S.sizes[k];save();go('stock')}
+}
+function addItem(k){
+  const b=prompt('Marca (ej: Michelin)'); if(!b)return;
+  const r=prompt('Referencia o modelo (ej: Primacy 4 91V)')||'';
+  const n=parseInt(prompt('¿Cuántas ruedas tienes ahora de esta?','0'),10)||0;
+  const it={id:uid(),b:b.trim(),r:r.trim(),qty:0};
+  S.sizes[k].push(it);
+  if(n>0)mov(k,it.id,n);else{save();render()}
+}
+function delItem(k,id){
+  const it=S.sizes[k].find(i=>i.id===id);
+  if(confirm(`¿Borrar ${it.b} ${it.r}?`)){S.sizes[k]=S.sizes[k].filter(i=>i.id!==id);save();render()}
+}
+function undo(id){
+  const e=S.log.find(l=>l.id===id); if(!e)return;
+  if(!confirm('¿Deshacer este movimiento? Se devolverá el stock.'))return;
+  const it=S.sizes[e.s]&&S.sizes[e.s].find(i=>i.id===e.i);
+  if(it){
+    const nq=it.qty+(e.t==='out'?e.n:-e.n);
+    if(nq<0){alert('No se puede deshacer: el stock quedaría negativo.');return}
+    it.qty=nq;
+  }
+  S.log=S.log.filter(l=>l.id!==id);save();render();
+}
+const badge=n=>n===0?'<span class="pill zero">Agotada</span>':n<=LOW?'<span class="pill low">Quedan pocas</span>':'';
+const fmt=d=>{const[a,b,c]=d.split('-');return `${c}/${b}/${a}`};
+
+function render(){
+  const m=$('#main');
+  $('#menuBtn').style.display=view==='size'?'none':'';
+  $('#backBtn').style.display=view==='size'?'':'none';
+  $('#nav').innerHTML='<h2>Stock Neumáticos</h2>'+MENU.map(([v,i,t])=>`<button class="${v===view||(v==='stock'&&view==='size')?'sel':''}" onclick="go('${v}')"><span>${i}</span>${t}</button>`).join('');
+  ({home:rHome,stock:rStock,size:rSize,out:rOut,count:rCount,backup:rBackup})[view](m);
+}
+
+function rHome(m){
+  $('#title').textContent='Inicio';
+  const y=cal.getFullYear(),mo=cal.getMonth(),pre=iso(cal).slice(0,7);
+  const outs=S.log.filter(l=>l.t==='out');
+  const perDay={};outs.forEach(l=>perDay[l.d]=(perDay[l.d]||0)+l.n);
+  const month=outs.filter(l=>l.d.startsWith(pre)).reduce((a,l)=>a+l.n,0);
+  const first=(new Date(y,mo,1).getDay()+6)%7, days=new Date(y,mo+1,0).getDate();
+  let g=['L','M','X','J','V','S','D'].map(d=>`<div class="h">${d}</div>`).join('')+'<div class="day empty"></div>'.repeat(first);
+  for(let d=1;d<=days;d++){
+    const k=pre+'-'+String(d).padStart(2,'0');
+    g+=`<button class="day ${k===iso(new Date())?'today':''} ${k===selDay?'sel':''}" onclick="selDay='${k}';render()">${d}${perDay[k]?`<b>${perDay[k]}</b>`:'<span></span>'}</button>`;
+  }
+  const dayLog=outs.filter(l=>l.d===selDay);
+  m.innerHTML=`
+  <div class="card row"><button class="ib" style="color:var(--tx)" onclick="cal=new Date(cal.getFullYear(),cal.getMonth()-1,1);render()">‹</button>
+  <h2 class="grow" style="text-align:center;margin:0">${MESES[mo]} ${y}</h2>
+  <button class="ib" style="color:var(--tx)" onclick="cal=new Date(cal.getFullYear(),cal.getMonth()+1,1);render()">›</button></div>
+  <div class="cal">${g}</div>
+  <div class="total" style="margin-top:12px"><div class="big">${month}</div><div>ruedas puestas en ${MESES[mo].toLowerCase()}</div></div>
+  <div class="card"><b>${fmt(selDay)}</b>
+  ${dayLog.length?dayLog.map(l=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd)"><div class="grow"><b>${esc(l.s)}</b> · ${esc(l.b)} ${esc(l.r)}</div><b>${l.n}</b></div>`).join(''):'<div class="mu">Ese día no se puso ninguna rueda.</div>'}
+  </div>
+  <button class="btn ac full" onclick="go('stock')">Ir al stock para poner ruedas</button>`;
+}
+
+function rStock(m){
+  $('#title').textContent='Stock de almacén';
+  const ks=Object.keys(S.sizes).sort().filter(k=>k.includes(q.toUpperCase()));
+  m.innerHTML=`<input type="search" placeholder="Buscar medida (ej: 205)" value="${esc(q)}" oninput="q=this.value;rStock(\$('#main'));const i=\$('input');i.focus();i.setSelectionRange(q.length,q.length)">`+
+  (ks.length?ks.map(k=>{const n=qtyOf(k);return `<button class="item" onclick="go('size','${esc(k)}')"><div class="grow"><div class="size">${esc(k)}</div><div class="mu">${S.sizes[k].length} marca${S.sizes[k].length===1?'':'s'}</div></div>${badge(n)}<div class="qty">${n}</div></button>`}).join('')
+  :`<div class="empty-msg">${Object.keys(S.sizes).length?'No hay ninguna medida con ese número.':'Aún no hay medidas. Pulsa “+ Medida” para añadir la primera.'}</div>`)+
+  `<button class="btn ac fab" onclick="addSize()">+ Medida</button>`;
+}
+
+function rSize(m){
+  const k=cur; if(!S.sizes[k]){go('stock');return}
+  $('#title').textContent=k;
+  const items=S.sizes[k];
+  m.innerHTML=`<div class="total"><div class="big">${qtyOf(k)}</div><div>ruedas de esta medida</div></div>`+
+  (items.length?items.map(i=>`<div class="card"><div class="row"><div class="grow"><b style="font-size:18px">${esc(i.b)}</b><div class="mu">${esc(i.r)||'Sin referencia'}</div>${badge(i.qty)}</div><div class="qty">${i.qty}</div></div>
+  <div class="row" style="margin-top:10px;justify-content:space-between">
+   <button class="step m" onclick="mov('${esc(k)}','${i.id}',-1)" aria-label="Quitar una">−</button>
+   <div class="grow" style="display:flex;gap:6px;justify-content:center"><button class="mini" onclick="movN('${esc(k)}','${i.id}',-1)">Sacar varias</button><button class="mini" onclick="movN('${esc(k)}','${i.id}',1)">Entrada pedido</button></div>
+   <button class="step p" onclick="mov('${esc(k)}','${i.id}',1)" aria-label="Añadir una">+</button></div>
+  <div style="text-align:right;margin-top:8px"><button class="mini" onclick="delItem('${esc(k)}','${i.id}')">Borrar</button></div></div>`).join('')
+  :'<div class="empty-msg">Esta medida no tiene marcas todavía.</div>')+
+  `<button class="btn ac full" onclick="addItem('${esc(k)}')">+ Añadir marca y referencia</button>
+  <button class="btn ghost full" style="margin-top:10px" onclick="delSize('${esc(k)}')">Borrar esta medida</button>
+  <p class="mu">El botón − resta una rueda y la apunta como puesta hoy en el calendario. El + suma una rueda recibida.</p>`;
+}
+
+function rOut(m){
+  $('#title').textContent='Ruedas sacadas';
+  const outs=S.log.filter(l=>l.t==='out').slice().reverse().slice(0,200);
+  m.innerHTML=outs.length?outs.map(l=>`<div class="card row"><div class="grow"><b>${esc(l.s)}</b> · ${esc(l.b)} ${esc(l.r)}<div class="mu">${fmt(l.d)}</div></div><div class="qty" style="font-size:24px">${l.n}</div><button class="mini" onclick="undo('${l.id}')">Deshacer</button></div>`).join('')
+  :'<div class="empty-msg">Todavía no has sacado ruedas del almacén.</div>';
+}
+
+function rCount(m){
+  $('#title').textContent='Contador de ruedas';
+  const ks=Object.keys(S.sizes).sort(), t=totalAll(), mx=Math.max(1,...ks.map(qtyOf));
+  const low=[];ks.forEach(k=>S.sizes[k].forEach(i=>{if(i.qty<=LOW)low.push([k,i])}));
+  m.innerHTML=`<div class="total"><div class="big">${t}</div><div>ruedas en el almacén</div></div>`+
+  (low.length?`<div class="card"><b>Para pedir pronto</b>${low.map(([k,i])=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd)"><div class="grow">${esc(k)} · ${esc(i.b)} ${esc(i.r)}</div>${badge(i.qty)}<b>${i.qty}</b></div>`).join('')}</div>`:'')+
+  ks.map(k=>`<div class="card"><div class="row"><div class="size grow">${esc(k)}</div><div class="qty">${qtyOf(k)}</div></div><div class="bar"><i style="width:${qtyOf(k)/mx*100}%"></i></div></div>`).join('');
+}
+
+function rBackup(m){
+  $('#title').textContent='Copia de seguridad';
+  m.innerHTML=`<div class="card"><p>Los datos se guardan en este móvil o tablet. Haz una copia de vez en cuando, o para pasar los datos a otro aparato.</p>
+  <button class="btn ac full" onclick="expJSON()">Descargar copia</button>
+  <button class="btn ghost full" style="margin-top:10px" onclick="document.getElementById('imp').click()">Restaurar copia</button>
+  <input type="file" id="imp" accept=".json" hidden onchange="impJSON(this.files[0])">
+  <button class="btn ghost full" style="margin-top:10px" onclick="expCSV()">Descargar stock para Excel (CSV)</button></div>`;
+}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function expJSON(){dl('stock-neumaticos-'+iso(new Date())+'.json',JSON.stringify(S),'application/json')}
+function expCSV(){
+  const r=['Medida;Marca;Referencia;Cantidad'];
+  Object.keys(S.sizes).sort().forEach(k=>S.sizes[k].forEach(i=>r.push([k,i.b,i.r,i.qty].join(';'))));
+  dl('stock-'+iso(new Date())+'.csv','\ufeff'+r.join('\n'),'text/csv');
+}
+function impJSON(f){
+  if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.sizes||!d.log)throw 0;
+    if(confirm('Esto reemplaza los datos actuales. ¿Continuar?')){S=d;save();go('home')}}catch(e){alert('El archivo no es una copia válida.')}};
+  rd.readAsText(f);
+}
+render();
+</script>
+</body>
+</html>
